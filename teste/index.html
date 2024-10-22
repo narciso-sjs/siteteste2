@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrossel de Cavalos</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            padding: 20px;
+        }
+
+        .rotativus-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .rotativus {
+            display: flex;
+            overflow: hidden;
+            position: relative;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+
+        .rotativus-interior {
+            display: flex;
+            transition: transform 0.5s ease;
+            width: 100%;
+        }
+
+        .scheda {
+            min-width: 100%;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            border-radius: 16px;
+        }
+
+        .scheda-imago-container {
+            position: relative;
+            width: 100%;
+            padding-top: 75%;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .scheda-imago {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Estilo do card vendido */
+        .scheda.vendido {
+            background: #f8f9fa;
+            position: relative;
+        }
+
+        .scheda.vendido::before {
+            content: 'VENDIDO';
+            position: absolute;
+            top: 20px;
+            right: -35px;
+            background: #dc3545;
+            color: white;
+            padding: 8px 40px;
+            transform: rotate(45deg);
+            font-weight: bold;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .scheda.vendido .scheda-imago-container {
+            opacity: 0.7;
+        }
+
+        .scheda.vendido .pretium {
+            background: #dc3545;
+            color: white;
+        }
+
+        .scheda.vendido .plus-detalhes-puga {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .scheda-titulus {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            color: #333;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .scheda-descriptio {
+            color: #666;
+            line-height: 1.6;
+            font-size: clamp(1rem, 2vw, 1.1rem);
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            text-align: justify;
+        }
+
+        .pretium {
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            font-weight: bold;
+        }
+
+        .plus-detalhes-puga {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 250px;
+            margin: 0 auto;
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .plus-detalhes-puga:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        .orbiculi {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .orb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ddd;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .orb.active {
+            background-color: #4CAF50;
+            transform: scale(1.2);
+        }
+
+        /* Status de venda */
+        .status-venda {
+            background: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        /* Painel Admin */
+        .admin-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .admin-panel.active {
+            right: 0;
+        }
+
+        .admin-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+
+        .admin-toggle:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .admin-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .admin-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .admin-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+        }
+
+        .control-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .toggle-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .toggle-button.vendido {
+            background: #dc3545;
+        }
+
+        .toggle-button:hover {
+            opacity: 0.9;
+        }
+
+        /* Modal de Senha */
+        .password-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1002;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-modal.active {
+            display: flex;
+        }
+
+        .password-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .password-input:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
+        .password-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .password-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .confirm-password {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .cancel-password {
+            background: #dc3545;
+            color: white;
+        }
+
+        .password-button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Status Online */
+        .online-status {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #4CAF50;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .online-status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .online-status.offline {
+            background: #dc3545;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .admin-panel {
+                width: 100%;
+                right: -100%;
+            }
+
+            .scheda {
+                padding: 15px;
+            }
+
+            .password-content {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .online-status {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="online-status">Online</div>
+    <button class="admin-toggle">Painel Admin</button>
+
+    <div class="admin-panel">
+        <button class="admin-close">&times;</button>
+        <h2 class="admin-title">Painel Administrativo</h2>
+        <div class="admin-controls">
+            <div class="control-card">
+                <h3 class="control-title">Cavalo Árabe</h3>
+                <button class="toggle-button" data-index="0">Marcar como Vendido</button>
+            </div>
+            <div class="control-card">
+                <h3 class="control-title">Quarto de Milha</h3>
+                <button class="toggle-button" data-index="1">Marcar como Vendido</button>
+            </div>
+            <div class="control-card">
+                <h3 class="control-title">Mangalarga</h3>
+                <button class="toggle-button" data-index="2">Marcar como Vendido</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="password-modal">
+        <div class="password-content">
+            <h3>Digite a senha de administrador</h3>
+            <input type="password" class="password-input" placeholder="Senha">
+            <div class="password-buttons">
+                <button class="password-button cancel-password">Cancelar</button>
+                <button class="password-button confirm-password">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <section class="rotativus-container">
+        <div class="rotativus">
+            <div class="rotativus-interior">
+                <section class="scheda">
+                    <div class="scheda-imago-container">
+                        <img src="/api/placeholder/600/400" alt="Cavalo Árabe" class="scheda-imago">
+                    </div>
+                    <h2 class="scheda-titulus">Cavalo Árabe</h2>
+                    <div class="scheda-descriptio">
+                        Elegante cavalo árabe com linhagem premiada. Temperamento dócil e excelente para competições.
+                    </div>
+                    <div class="pretium">
+                        <span class="pretium-actuale">R$ 50.000</span>
+                    </div>
+                    <button class="plus-detalhes-puga">Ver Detalhes</button>
+                </section>
+                <section class="scheda">
+                    <div class="scheda-imago-container">
+                        <img src="/api/placeholder/600/400" alt="Quarto de Milha" class="scheda-imago">
+                    </div>
+                    <h2 class="scheda-titulus">Quarto de Milha</h2>
+                    <div class="scheda-descriptio">
+                        Forte e veloz, este Quarto de Milha é perfeito para provas de velocidade e rodeios.
+                    </div>
+                    <div class="pretium">
+                        <span class="pretium-actuale">R$ 55.000</span>
+                    </div>
+                    <button class="plus-detalhes-puga">Ver Detalhes</button>
+                </section>
+                <section class="scheda">
+                    <div class="scheda-imago-container">
+                        <img src="/api/placeholder/600/400" alt="Mangalarga Marchador" class="scheda-imago">
+                    </div>
+                    <h2 class="scheda-titulus">Mangalarga</h2>
+                    <div class="scheda-descriptio">
+                        Exemplar de marcha picada, ideal para cavalgadas e exposições. Conhecido por seu conforto e resistência.
+                    </div>
+                    <div class="pretium">
+                        <span class="pretium-actuale">R$ 45.000</span>
+                    </div>
+                    <button class="plus-detalhes-puga">Ver Detalhes</button>
+                </section>
+            </div>
+        </div>
+        <div class="orbiculi">
+            <div class="orb active"></div>
+            <div class="orb"></div>
+            <div class="orb"></div>
+        </div>
+    </section>
+
+    <script>
+        (() => {
+            // Configurações e variáveis
+            const ADMIN_PASSWORD = '123456';
+            const rotativus = document.querySelector('.rotativus-interior');
+            const schedas = document.querySelectorAll('.scheda');
+            const orbs = document.querySelectorAll('.orb');
+            const adminPanel = document.querySelector('.admin-panel');
+            const adminToggle = document.querySelector('.admin-toggle');
+            const adminClose = document.querySelector('.admin-close');
+            const passwordModal = document.querySelector('.password-modal');
+            const passwordInput = document.querySelector('.password-input');
+            const confirmPasswordBtn = document.querySelector('.confirm-password');
+            const cancelPasswordBtn = document.querySelector('.cancel-password');
+            const onlineStatus = document.querySelector('.online-status');
+            
+            let currentIndex = 0;
+            let pendingToggleButton = null;
+            let touchStartX = null;
+            let socket;
+            let reconnectAttempts = 0;
+            const MAX_RECONNECT_ATTEMPTS = 5;
+
+            // Funções de WebSocket
+            const setupWebSocket = () => {
+                if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                    onlineStatus.textContent = 'Offline - Reconexão falhou';
+                    onlineStatus.classList.add('offline');
+                    return;
+                }
+
+                try {
+                    socket = new WebSocket('wss://seu-servidor-websocket.com');
+
+                    socket.onopen = () => {
+                        console.log('Conexão WebSocket estabelecida');
+                        onlineStatus.textContent = 'Online';
+                        onlineStatus.classList.remove('offline');
+                        reconnectAttempts = 0;
+                        requestCurrentState();
+                    };
+
+                    socket.onmessage = handleWebSocketMessage;
+                    socket.onclose = handleWebSocketClose;
+                    socket.onerror = handleWebSocketError;
+                } catch (error) {
+                    console.error('Erro ao criar conexão WebSocket:', error);
+                    handleWebSocketError(error);
+                }
+            };
+
+            const handleWebSocketMessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    switch (data.type) {
+                        case 'stateUpdate':
+                            updateAllHorseStatuses(data.state);
+                            break;
+                        case 'horseUpdate':
+                            updateHorseStatus(data.index, data.isVendido, false);
+                            break;
+                        default:
+                            console.log('Mensagem não reconhecida:', data);
+                    }
+                } catch (error) {
+                    console.error('Erro ao processar mensagem:', error);
+                }
+            };
+
+            const handleWebSocketClose = () => {
+                console.log('Conexão WebSocket fechada');
+                onlineStatus.textContent = 'Offline - Reconectando...';
+                onlineStatus.classList.add('offline');
+                reconnectAttempts++;
+                
+                setTimeout(setupWebSocket, Math.min(1000 * Math.pow(2, reconnectAttempts), 30000));
+            };
+
+            const handleWebSocketError = (error) => {
+                console.error('Erro na conexão WebSocket:', error);
+                onlineStatus.textContent = 'Offline';
+                onlineStatus.classList.add('offline');
+            };
+
+            const requestCurrentState = () => {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: 'requestState' }));
+                }
+            };
+
+            // Funções de atualização de estado
+            const updateHorseStatus = (index, isVendido, shouldBroadcast = true) => {
+                const scheda = schedas[index];
+                const toggleButton = document.querySelector(`.toggle-button[data-index="${index}"]`);
+                const pretiumElement = scheda.querySelector('.pretium-actuale');
+                const detalhesButton = scheda.querySelector('.plus-detalhes-puga');
+                const precoOriginal = isVendido ? pretiumElement.textContent : null;
+
+                if (isVendido) {
+                    scheda.classList.add('vendido');
+                    pretiumElement.innerHTML = `
+                        <div style="text-align: center">
+                            <span style="color: white; font-size: 1.2em; font-weight: bold;">VENDIDO</span><br>
+                            <small style="color: rgba(255,255,255,0.8);">(Valor original: ${precoOriginal})</small>
+                        </div>
+                    `;
+                    detalhesButton.textContent = 'Indisponível';
+                    detalhesButton.disabled = true;
+
+                    let statusVenda = scheda.querySelector('.status-venda');
+                    if (!statusVenda) {
+                        statusVenda = document.createElement('div');
+                        statusVenda.className = 'status-venda';
+                        scheda.appendChild(statusVenda);
+                    }
+                    statusVenda.textContent = `Vendido em: ${new Date().toLocaleDateString('pt-BR')}`;
+
+                    if (toggleButton) {
+                        toggleButton.textContent = 'Marcar como Disponível';
+                        toggleButton.classList.add('vendido');
+                    }
+                } else {
+                    scheda.classList.remove('vendido');
+                    const precos = ['R$ 50.000', 'R$ 55.000', 'R$ 45.000'];
+                    pretiumElement.textContent = precos[index];
+                    detalhesButton.textContent = 'Ver Detalhes';
+                    detalhesButton.disabled = false;
+
+                    const statusVenda = scheda.querySelector('.status-venda');
+                    if (statusVenda) {
+                        scheda.removeChild(statusVenda);
+                    }
+
+                    if (toggleButton) {
+                        toggleButton.textContent = 'Marcar como Vendido';
+                        toggleButton.classList.remove('vendido');
+                    }
+                }
+
+                if (shouldBroadcast && socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({
+                        type: 'horseUpdate',
+                        index: index,
+                        isVendido: isVendido
+                    }));
+                }
+
+                saveState();
+            };
+
+            const updateAllHorseStatuses = (states) => {
+                states.forEach((isVendido, index) => {
+                    updateHorseStatus(index, isVendido, false);
+                });
+                saveState();
+            };
+
+            // Funções de navegação do carrossel
+            const showScheda = (index) => {
+                const totalSchedas = schedas.length;
+                currentIndex = (index + totalSchedas) % totalSchedas;
+                const offset = -currentIndex * 100;
+                rotativus.style.transform = `translateX(${offset}%)`;
+                updateOrbs();
+            };
+
+            const updateOrbs = () => {
+                orbs.forEach((orb, i) => {
+                    orb.classList.toggle('active', i === currentIndex);
+                });
+            };
+
+            // Funções de persistência
+            const saveState = () => {
+                const state = Array.from(schedas).map(scheda => scheda.classList.contains('vendido'));
+                localStorage.setItem('cavalosState', JSON.stringify(state));
+            };
+
+            const loadState = () => {
+                const state = JSON.parse(localStorage.getItem('cavalosState'));
+                if (state) {
+                    state.forEach((isVendido, index) => {
+                        if (isVendido) {
+                            updateHorseStatus(index, isVendido, false);
+                        }
+                    });
+                }
+            };
+
+            // Event Listeners
+            orbs.forEach((orb, index) => {
+                orb.addEventListener('click', () => showScheda(index));
+            });
+
+            // Navegação touch
+            rotativus.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+            });
+
+            rotativus.addEventListener('touchmove', (e) => {
+                if (!touchStartX) return;
+                
+                const currentX = e.touches[0].clientX;
+                const diff = touchStartX - currentX;
+                
+                if (Math.abs(diff) > 50) {
+                    showScheda(diff > 0 ? currentIndex + 1 : currentIndex - 1);
+                    touchStartX = null;
+                }
+            });
+
+            rotativus.addEventListener('touchend', () => {
+                touchStartX = null;
+            });
+
+            // Navegação por teclado
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') showScheda(currentIndex + 1);
+                if (e.key === 'ArrowLeft') showScheda(currentIndex - 1);
+            });
+
+            // Eventos do painel administrativo
+            adminToggle.addEventListener('click', () => {
+                passwordModal.classList.add('active');
+                passwordInput.value = '';
+                passwordInput.focus();
+            });
+
+            adminClose.addEventListener('click', () => {
+                adminPanel.classList.remove('active');
+            });
+
+            // Eventos dos botões de toggle
+            document.querySelectorAll('.toggle-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    pendingToggleButton = e.target;
+                    passwordModal.classList.add('active');
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                });
+            });
+
+            // Eventos do modal de senha
+            confirmPasswordBtn.addEventListener('click', () => {
+                if (passwordInput.value === ADMIN_PASSWORD) {
+                    passwordModal.classList.remove('active');
+                    if (!adminPanel.classList.contains('active')) {
+                        adminPanel.classList.add('active');
+                    }
+                    if (pendingToggleButton) {
+                        const index = parseInt(pendingToggleButton.dataset.index);
+                        const isCurrentlyVendido = schedas[index].classList.contains('vendido');
+                        updateHorseStatus(index, !isCurrentlyVendido);
+                        pendingToggleButton = null;
+                    }
+                } else {
+                    alert('Senha incorreta!');
+                }
+                passwordInput.value = '';
+            });
+
+            cancelPasswordBtn.addEventListener('click', () => {
+                passwordModal.classList.remove('active');
+                pendingToggleButton = null;
+                passwordInput.value = '';
+            });
+
+            passwordModal.addEventListener('click', (e) => {
+                if (e.target === passwordModal) {
+                    passwordModal.classList.remove('active');
+                    pendingToggleButton = null;
+                    passwordInput.value = '';
+                }
+            });
+
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    confirmPasswordBtn.click();
+                }
+            });
+
+            // Inicialização
+            document.addEventListener('DOMContentLoaded', () => {
+                loadState();
+                setupWebSocket();
+                showScheda(0);
+            });
+        })();
+    </script>
+</body>
+</html>
